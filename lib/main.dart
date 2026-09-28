@@ -4,8 +4,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
-const String kUrl = 'https://kboop-dev.github.io/cepillos_dentales/';
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   // La app se abre siempre en horizontal y en pantalla completa.
