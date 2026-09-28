@@ -48,7 +48,7 @@ class _RutinaPageState extends State<RutinaPage> {
     final c = WebViewController.fromPlatformCreationParams(params)
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFFCFE9FF))
-      ..loadRequest(Uri.parse(kUrl));
+      ..loadFlutterAsset('web/index.html');
     if (c.platform is AndroidWebViewController) {
       (c.platform as AndroidWebViewController)
           .setMediaPlaybackRequiresUserGesture(false);
