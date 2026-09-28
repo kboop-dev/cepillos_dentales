@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#cfe9ff">
+<title>Rutina dental</title>
+<style>
+:root{
+  --sky1:#bfe3ff; --sky2:#dff1ff; --sky3:#eef8ff;
+  --ink:#2f4a7a; --pink:#ff8fb1; --yellow:#ffd23f; --mint:#7be0b0; --blue:#4fb3ff;
+}
+*{box-sizing:border-box;}
+html,body{height:100%; margin:0;}
+body{
+  font-family:'Comic Sans MS','Chalkboard SE','Trebuchet MS',sans-serif; color:var(--ink);
+  background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 60%,var(--sky3) 100%);
+  overflow:hidden; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
+}
+button{font-family:inherit; cursor:pointer; border:none;}
+
+/* ---------- Decoración de fondo (suave, sin parpadeos) ---------- */
+#deco{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
+.bubble{position:absolute; bottom:-14vh; border-radius:50%; background:rgba(255,255,255,.55); border:2px solid rgba(255,255,255,.85); animation:rise linear infinite;}
+@keyframes rise{0%{transform:translate(0,0);}50%{transform:translate(2.5vw,-65vh);}100%{transform:translate(-1.5vw,-130vh);}}
+.cloud{position:absolute; height:7vh; width:20vh; background:#fff; border-radius:8vh; opacity:.85; animation:drift linear infinite;}
+.cloud::before,.cloud::after{content:""; position:absolute; background:#fff; border-radius:50%;}
+.cloud::before{width:9vh; height:9vh; top:-4.5vh; left:3vh;}
+.cloud::after{width:6.5vh; height:6.5vh; top:-3vh; left:10vh;}
+@keyframes drift{from{transform:translateX(-30vw);}to{transform:translateX(130vw);}}
+.twinkle{position:absolute; color:#fff; text-shadow:0 0 8px rgba(255,255,255,.9); animation:tw 3.5s ease-in-out infinite;}
+@keyframes tw{0%,100%{opacity:.35; transform:scale(.85);}50%{opacity:1; transform:scale(1.15);}}
+
+/* ---------- Pantallas ---------- */
+.screen{
+  position:fixed; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; z-index:2;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen.active{display:flex; animation:fadeIn .6s ease;}
+@keyframes fadeIn{from{opacity:0; transform:scale(.97);}to{opacity:1; transform:scale(1);}}
+
+h1{font-size:clamp(22px,6.5vmin,46px); margin:0 0 2vmin; text-shadow:0 3px 0 rgba(255,255,255,.9);}
+
+/* ---------- Inicio ---------- */
+#playBtn{
+  width:min(34vmin,190px); height:min(34vmin,190px); border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #ffe98a, var(--yellow) 60%, #ffb400);
+  box-shadow:0 1.2vmin 0 #e39a00, 0 2.5vmin 4vmin rgba(255,180,0,.45);
+  display:flex; align-items:center; justify-content:center; animation:pulse 1.8s ease-in-out infinite;
+}
+#playBtn:active{transform:translateY(.8vmin) scale(.97);}
+#playBtn svg{width:46%; height:46%; margin-left:6%;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+.bigText{font-size:clamp(20px,6vmin,38px); font-weight:900; margin:3vmin 0 1vmin; color:#ff6b9d; text-shadow:0 2px 0 #fff;}
+.hint{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.85); padding:1.4vmin 3vmin; border-radius:30px; font-size:clamp(14px,3.6vmin,22px); font-weight:800;}
+.phoneIcon{width:34px; height:34px; animation:rotPhone 2.6s ease-in-out infinite;}
+@keyframes rotPhone{0%,20%{transform:rotate(0);}60%,100%{transform:rotate(-90deg);}}
+
+/* ---------- Preparación ---------- */
+.pair{display:flex; align-items:center; justify-content:center; gap:3vw; width:100%;}
+.item{width:min(30vw,44vh); opacity:0; transform:scale(.3) rotate(-10deg); transition:all .6s cubic-bezier(.3,1.5,.5,1);}
+.item.show{opacity:1; transform:scale(1) rotate(0);}
+.item svg{width:100%; height:auto; filter:drop-shadow(0 1vh 1vh rgba(60,120,200,.3));}
+.chip{display:inline-block; margin-top:1vh; background:#fff; padding:.8vh 2.2vh; border-radius:20px; font-weight:900; font-size:clamp(13px,3.2vmin,22px);}
+.plus{font-size:min(14vw,26vh); font-weight:900; color:var(--pink); opacity:0; transform:scale(.2); transition:all .5s cubic-bezier(.3,1.6,.5,1); text-shadow:0 .6vh 0 #fff;}
+.plus.show{opacity:1; transform:scale(1);}
+#caption{position:fixed; left:0; right:0; bottom:calc(4vh + env(safe-area-inset-bottom)); z-index:5; display:flex; justify-content:center; pointer-events:none;}
+#caption span{background:rgba(255,255,255,.92); padding:1.2vh 3vh; border-radius:26px; font-size:clamp(15px,4vmin,26px); font-weight:800; max-width:90vw; display:none;}
+#caption span.on{display:inline-block; animation:fadeIn .4s ease;}
+
+/* ---------- Cuenta regresiva ---------- */
+#countNum{font-size:min(38vw,62vh); font-weight:900; color:var(--pink); line-height:1; text-shadow:0 1vh 0 #fff, 0 2vh 3vh rgba(255,107,157,.35); animation:popNum .9s cubic-bezier(.3,1.6,.5,1);}
+#countNum.go{font-size:min(16vw,26vh); color:var(--blue);}
+@keyframes popNum{0%{transform:scale(.2); opacity:0;}60%{transform:scale(1.15); opacity:1;}100%{transform:scale(1);}}
+
+/* ---------- Video ---------- */
+.vrow{display:flex; align-items:center; justify-content:center; gap:2.4vw; width:100%;}
+.side{width:16vw; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.mascot{font-size:min(14vw,26vh); animation:bounce 1.1s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-2.5vh) rotate(4deg);}}
+.center{display:flex; flex-direction:column; align-items:center; gap:1.6vh;}
+.frame{position:relative; background:#fff; padding:1.3vh; border-radius:2.6vh; box-shadow:0 1.6vh 4vh rgba(60,120,200,.38);}
+video{display:block; width:min(58vw,calc(68vh * 16 / 9)); height:auto; aspect-ratio:16/9; border-radius:1.8vh; background:#000; object-fit:contain;}
+.bar{width:100%; height:1.6vh; background:rgba(255,255,255,.8); border-radius:1vh; overflow:hidden;}
+.bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--mint),var(--blue)); border-radius:1vh; transition:width .4s linear;}
+#tapPlay{position:absolute; inset:1.3vh; border-radius:1.8vh; background:rgba(47,74,122,.55); display:none; align-items:center; justify-content:center; color:#fff; font-size:clamp(18px,5vmin,34px); font-weight:900;}
+#tapPlay.show{display:flex;}
+.timerWrap{position:relative; width:min(15vw,28vh); height:min(15vw,28vh);}
+.timerWrap svg{width:100%; height:100%; transform:rotate(-90deg);}
+.tBg{fill:rgba(255,255,255,.8); stroke:#fff; stroke-width:10;}
+.tRing{fill:none; stroke:var(--pink); stroke-width:10; stroke-linecap:round; stroke-dasharray:276.5; stroke-dashoffset:0; transition:stroke-dashoffset .4s linear;}
+#timeText{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:min(4.4vw,8.4vh); font-weight:900; color:var(--ink);}
+.timerLabel{font-weight:900; font-size:clamp(12px,3vmin,20px); margin-top:1vh; background:#fff; padding:.5vh 1.8vh; border-radius:16px;}
+
+/* ---------- Final ---------- */
+#bigStar{width:min(46vw,58vh); animation:starPop 1.2s cubic-bezier(.3,1.6,.5,1), starFloat 2.2s ease-in-out 1.2s infinite; filter:drop-shadow(0 1.5vh 2vh rgba(255,180,0,.55));}
+@keyframes starPop{0%{transform:scale(0) rotate(-180deg);}100%{transform:scale(1) rotate(0);}}
+@keyframes starFloat{0%,100%{transform:scale(1) rotate(-3deg);}50%{transform:scale(1.07) rotate(3deg);}}
+#replay{display:none; margin-top:1.5vh; background:var(--pink); color:#fff; font-size:clamp(16px,4.2vmin,26px); font-weight:900; padding:1.4vh 4vh; border-radius:30px; box-shadow:0 .8vh 0 #e0658b;}
+#replay.show{display:inline-block; animation:fadeIn .6s ease;}
+.confetti{position:fixed; top:-30px; font-size:26px; pointer-events:none; z-index:30; animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(115vh) rotate(360deg); opacity:.3;}}
+
+/* ---------- Pide girar ---------- */
+#rotate{position:fixed; inset:0; z-index:50; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; background:linear-gradient(180deg,var(--sky1),var(--sky3));}
+#rotate .phoneBig{width:34vw; max-width:150px; animation:rotPhone 2.6s ease-in-out infinite;}
+#rotate p{font-size:clamp(22px,7vw,34px); font-weight:900; margin:4vh 0 0; color:#ff6b9d; text-shadow:0 2px 0 #fff;}
+@media (orientation:portrait){ body.started #rotate{display:flex;} }
+
+/* ---------- Botón de sonido ---------- */
+#muteBtn{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:calc(10px + env(safe-area-inset-right)); z-index:60; width:52px; height:52px; border-radius:50%; background:#fff; font-size:24px; box-shadow:0 4px 0 rgba(0,0,0,.12); display:none;}
+body.started #muteBtn{display:block;}
+
+@media (prefers-reduced-motion: reduce){ .bubble,.cloud,.twinkle{animation:none;} }
+</style>
+</head>
+<body>
+<div id="deco"></div>
+
+<!-- 1. INICIO -->
+<section id="start" class="screen active">
+  <h1>🦷 ¡Es hora de cepillarnos los dientes! 🦷</h1>
+  <button id="playBtn" aria-label="Comenzar">
+    <svg viewBox="0 0 100 100"><polygon points="20,10 90,50 20,90" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="bigText">¡Presiona el botón para comenzar!</div>
+  <div class="hint">
+    <svg class="phoneIcon" viewBox="0 0 40 40"><rect x="11" y="3" width="18" height="34" rx="4" fill="none" stroke="#2f4a7a" stroke-width="3"/><circle cx="20" cy="32" r="1.8" fill="#2f4a7a"/></svg>
+    Gira tu teléfono en horizontal
+  </div>
+</section>
+
+<!-- 2. PREPARACIÓN -->
+<section id="prep" class="screen">
+  <div class="pair">
+    <div class="item" id="itemBrush">
+      <svg viewBox="0 0 200 130" style="transform:rotate(-18deg)">
+        <rect x="8" y="58" width="128" height="20" rx="10" fill="#4fb3ff"/>
+        <rect x="14" y="62" width="112" height="5" rx="3" fill="#9bd4ff"/>
+        <rect x="128" y="52" width="60" height="32" rx="8" fill="#fff" stroke="#4fb3ff" stroke-width="4"/>
+        <rect x="134" y="30" width="8" height="24" rx="3" fill="#ff8fb1"/><rect x="146" y="26" width="8" height="28" rx="3" fill="#ffd23f"/>
+        <rect x="158" y="30" width="8" height="24" rx="3" fill="#7be0b0"/><rect x="170" y="26" width="8" height="28" rx="3" fill="#ff8fb1"/>
+      </svg>
+      <span class="chip">🪥 Cepillo de dientes</span>
+    </div>
+    <div class="plus" id="plus">+</div>
+    <div class="item" id="itemPaste">
+      <svg viewBox="0 0 200 130" style="transform:rotate(14deg)">
+        <rect x="14" y="40" width="26" height="52" rx="4" fill="#cfe3f5"/>
+        <path d="M20 46 v40 M27 46 v40 M34 46 v40" stroke="#a9c8e6" stroke-width="2"/>
+        <rect x="36" y="34" width="118" height="64" rx="14" fill="#fff" stroke="#4fb3ff" stroke-width="4"/>
+        <rect x="36" y="56" width="118" height="20" fill="#4fb3ff"/>
+        <text x="95" y="90" font-size="34" text-anchor="middle">🦷</text>
+        <rect x="152" y="48" width="14" height="36" rx="3" fill="#dfeaf5"/>
+        <rect x="164" y="44" width="26" height="44" rx="8" fill="#ff8fb1"/>
+      </svg>
+      <span class="chip">✨ Pasta de dientes</span>
+    </div>
+  </div>
+</section>
+
+<!-- 3. CUENTA REGRESIVA -->
+<section id="count" class="screen"><div id="countNum">3</div></section>
+
+<!-- 4. VIDEO -->
+<section id="video" class="screen">
+  <div class="vrow">
+    <div class="side"><div class="mascot">🦷</div></div>
+    <div class="center">
+      <div class="frame">
+        <video id="vid" src="assets/videos/rutina.mp4" preload="auto" playsinline muted disablepictureinpicture disableremoteplayback></video>
+        <div id="tapPlay">▶ Toca para ver el video</div>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+    <div class="side">
+      <div class="timerWrap">
+        <svg viewBox="0 0 100 100"><circle class="tBg" cx="50" cy="50" r="44"/><circle class="tRing" id="tRing" cx="50" cy="50" r="44"/></svg>
+        <div id="timeText">2:00</div>
+      </div>
+      <div class="timerLabel">⏱ 2 minutos</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. FINAL -->
+<section id="end" class="screen">
+  <svg id="bigStar" viewBox="0 0 200 200">
+    <polygon points="100,10 122,72 190,74 136,114 156,178 100,140 44,178 64,114 10,74 78,72" fill="#ffd23f" stroke="#ffb400" stroke-width="7" stroke-linejoin="round"/>
+    <circle cx="84" cy="98" r="7" fill="#2f4a7a"/><circle cx="116" cy="98" r="7" fill="#2f4a7a"/>
+    <circle cx="86" cy="95" r="2.4" fill="#fff"/><circle cx="118" cy="95" r="2.4" fill="#fff"/>
+    <path d="M82 118 Q100 138 118 118" fill="none" stroke="#2f4a7a" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="70" cy="116" r="8" fill="#ff8fb1" opacity=".7"/><circle cx="130" cy="116" r="8" fill="#ff8fb1" opacity=".7"/>
+  </svg>
+  <h1 style="margin-top:1vh">¡Lo lograste! 🎉</h1>
+  <button id="replay">🔁 Jugar otra vez</button>
+</section>
+
+<div id="caption"><span id="capText"></span></div>
+
+<div id="rotate">
+  <svg class="phoneBig" viewBox="0 0 40 40"><rect x="11" y="3" width="18" height="34" rx="4" fill="#fff" stroke="#2f4a7a" stroke-width="2.6"/><circle cx="20" cy="32" r="1.6" fill="#2f4a7a"/></svg>
+  <p>¡Gira tu teléfono<br>en horizontal! 🔄</p>
+</div>
+<button id="muteBtn" aria-label="Sonido">🔊</button>
+
+<script>
+(function(){
+'use strict';
+
+/* ================== CONFIGURACIÓN ================== */
+var TOTAL_SECONDS = 120;          // duración del cronómetro (2 minutos)
+var MUSIC_LEVEL   = 0.55;         // volumen de la música de fondo
+var MUSIC_DUCK    = 0.18;         // volumen de la música mientras habla la voz
+// Frases de voz. Si existen los archivos MP3 (carpeta audio/) se usan; si no, se usa la voz del dispositivo.
+var VOICE = {
+  v1:  {text:'Prepara tu cepillo de dientes',            file:'assets/audio/voz1.mp3'},
+  v2:  {text:'y tu pasta de dientes favorita',           file:'assets/audio/voz2.mp3'},
+  v3:  {text:'para vivir una experiencia muy divertida',        file:'assets/audio/voz3.mp3'},
+  v4:  {text:'y prepárate para la siguiente aventura',   file:'assets/audio/voz4.mp3'},
+  end: {text:'¡Lo lograste! Te veré en tu siguiente rutina de higiene dental.', file:'assets/audio/voz5.mp3'}
+};
+
+/* ================== UTILIDADES ================== */
+function $(id){ return document.getElementById(id); }
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+var screens=['start','prep','count','video','end'], stage='start', runId=0, muted=false;
+function show(id){ screens.forEach(function(s){ $(s).classList.toggle('active', s===id); }); stage=id; }
+
+var mqPortrait = window.matchMedia('(orientation: portrait)');
+function isPortrait(){ return mqPortrait.matches; }
+function onOrient(fn){ if(mqPortrait.addEventListener) mqPortrait.addEventListener('change', fn); else mqPortrait.addListener(fn); }
+function offOrient(fn){ if(mqPortrait.removeEventListener) mqPortrait.removeEventListener('change', fn); else mqPortrait.removeListener(fn); }
+function whenLandscape(cb){
+  if(!isPortrait()){ cb(); return; }
+  var h=function(){ if(!isPortrait()){ offOrient(h); cb(); } };
+  onOrient(h);
+}
+
+/* ================== DECORACIÓN ================== */
+(function buildDeco(){
+  var d=$('deco'), i, e;
+  for(i=0;i<14;i++){ e=document.createElement('div'); e.className='bubble';
+    var s=(3+Math.random()*7); e.style.width=e.style.height=s+'vmin'; e.style.left=(Math.random()*96)+'vw';
+    e.style.animationDuration=(14+Math.random()*14)+'s'; e.style.animationDelay=(-Math.random()*20)+'s'; d.appendChild(e); }
+  for(i=0;i<3;i++){ e=document.createElement('div'); e.className='cloud'; e.style.top=(6+i*22)+'vh';
+    e.style.animationDuration=(60+i*25)+'s'; e.style.animationDelay=(-i*22)+'s'; d.appendChild(e); }
+  for(i=0;i<9;i++){ e=document.createElement('div'); e.className='twinkle'; e.textContent='✦';
+    e.style.left=(Math.random()*96)+'vw'; e.style.top=(Math.random()*80)+'vh'; e.style.fontSize=(14+Math.random()*16)+'px';
+    e.style.animationDelay=(-Math.random()*3.5)+'s'; d.appendChild(e); }
+})();
+
+/* ================== AUDIO (Web Audio: música + efectos) ================== */
+var ctx=null, master=null, sfxGain=null, musicTimer=null, musicStep=0, nextNoteTime=0;
+function initAudio(){
+  if(ctx){ if(ctx.state==='suspended') ctx.resume(); return; }
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext; ctx=new AC();
+    master=ctx.createGain(); master.gain.value=MUSIC_LEVEL; master.connect(ctx.destination);
+    sfxGain=ctx.createGain(); sfxGain.gain.value=0.5; sfxGain.connect(ctx.destination);
+  }catch(e){ ctx=null; }
+}
+function tone(freq,t,dur,vol,type,dest){
+  var o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(dest||master); o.start(t); o.stop(t+dur+0.05);
+}
+// Melodía tipo "caja de música" (pentatónica, alegre y suave). 32 corcheas = 4 compases: Do - La menor - Fa - Sol
+var N={C4:261.63,D4:293.66,E4:329.63,G4:392,A4:440,C5:523.25,D5:587.33,E5:659.25,G5:783.99,A5:880};
+var MEL=['E5',0,'G5','E5','D5',0,'C5','D5', 'E5',0,'C5','E5','A4',0,'C5',0, 'A4',0,'C5','D5','E5','D5','C5',0, 'D5',0,'E5','D5','C5',0,'G4',0];
+var BASS=[[130.81,196],[110,164.81],[174.61,261.63],[196,146.83]];
+var BPM=104, EIGHTH=60/BPM/2;
+function playStep(i,t){
+  var n=MEL[i%32];
+  if(n){ tone(N[n],t,0.55,0.20,'sine'); tone(N[n]*2,t,0.25,0.05,'sine'); }
+  var bar=Math.floor((i%32)/8), pos=(i%32)%8;
+  if(pos===0) tone(BASS[bar][0]*2,t,0.7,0.16,'triangle');
+  if(pos===4) tone(BASS[bar][1]*1,t,0.5,0.10,'triangle');
+}
+function startMusic(){
+  if(!ctx||musicTimer) return;
+  nextNoteTime=ctx.currentTime+0.1;
+  musicTimer=setInterval(function(){
+    while(nextNoteTime<ctx.currentTime+0.35){ playStep(musicStep,nextNoteTime); nextNoteTime+=EIGHTH; musicStep++; }
+  },90);
+}
+function duck(on){ if(!ctx) return; master.gain.setTargetAtTime(muted?0:(on?MUSIC_DUCK:MUSIC_LEVEL), ctx.currentTime, 0.15); }
+function beep(freq,dur){ if(!ctx||muted) return; var t=ctx.currentTime; tone(freq,t,dur,0.35,'sine',sfxGain); tone(freq*2,t,dur*0.6,0.10,'sine',sfxGain); }
+function fanfare(){
+  if(!ctx||muted) return; var t=ctx.currentTime, seq=[523.25,659.25,783.99,1046.5,783.99,1046.5,1318.5];
+  seq.forEach(function(f,i){ tone(f,t+i*0.14,0.5,0.28,'square',sfxGain); tone(f/2,t+i*0.14,0.5,0.12,'triangle',sfxGain); });
+  try{ if(navigator.vibrate) navigator.vibrate([90,40,90,40,200]); }catch(e){}
+}
+
+/* ================== VOZ (archivo MP3 si existe, si no voz del dispositivo) ================== */
+var synth=('speechSynthesis' in window)?window.speechSynthesis:null, voices=[];
+function loadVoices(){ if(synth) voices=synth.getVoices()||[]; }
+if(synth){ loadVoices(); if(synth.addEventListener) synth.addEventListener('voiceschanged', loadVoices); }
+function pickVoice(){
+  var es=voices.filter(function(v){ return /^es/i.test(v.lang); }); if(!es.length) return null;
+  var pref=['es-mx','es-us','es-419','es-es'];
+  for(var i=0;i<pref.length;i++){
+    var c=es.filter(function(v){ return v.lang.replace('_','-').toLowerCase()===pref[i]; });
+    if(c.length){ var f=c.filter(function(v){ return /female|mujer|paulina|monica|mónica|sabina|helena|luciana|google/i.test(v.name); })[0]; return f||c[0]; }
+  }
+  return es[0];
+}
+function setCaption(t){ var s=$('capText'); if(!t){ s.classList.remove('on'); s.textContent=''; return; } s.textContent=t; s.classList.add('on'); }
+
+// Devuelve una promesa que se resuelve cuando termina de "hablar". onStart se llama cuando empieza.
+function say(key,onStart){
+  return new Promise(function(resolve){
+    var v=VOICE[key], text=v.text, started=false, ended=false, fellBack=false;
+    var est=Math.max(1500, text.length*85);
+    function doStart(){ if(started) return; started=true; setCaption(text); if(onStart) onStart(); }
+    function doEnd(){ if(ended) return; ended=true; duck(false); resolve(); }
+    function timedOnly(){ doStart(); setTimeout(doEnd, est); }
+    function speakTTS(){
+      if(fellBack) return; fellBack=true;
+      if(!synth || muted){ timedOnly(); return; }
+      try{
+        synth.cancel();
+        var u=new SpeechSynthesisUtterance(text), vo=pickVoice();
+        u.lang='es-MX'; if(vo){ u.voice=vo; u.lang=vo.lang; } u.rate=0.9; u.pitch=1.15;
+        u.onstart=doStart; u.onend=doEnd;
+        u.onerror=function(){ if(muted){ setTimeout(doEnd, est); } else { doEnd(); } };
+        synth.speak(u);
+        setTimeout(doStart, 700);
+        setTimeout(function(){ if(!started){ doStart(); setTimeout(doEnd, est); } }, 2800);
+        setTimeout(doEnd, est*2+3000);
+      }catch(e){ timedOnly(); }
+    }
+    duck(true);
+    if(v.file && !muted){
+      try{
+        var a=new Audio(v.file); a.preload='auto';
+        a.onerror=speakTTS; a.onplaying=doStart; a.onended=doEnd;
+        var p=a.play(); if(p&&p.catch) p.catch(speakTTS);
+        setTimeout(function(){ if(!started) speakTTS(); }, 1800);   // si el MP3 no carga, usa la voz del dispositivo
+      }catch(e){ speakTTS(); }
+    } else { speakTTS(); }
+  });
+}
+
+/* ================== FLUJO ================== */
+function resetPrep(){ ['itemBrush','itemPaste','plus'].forEach(function(id){ $(id).classList.remove('show'); }); setCaption(''); }
+
+async function prepSequence(run){
+  resetPrep(); show('prep');
+  await say('v1', function(){ setTimeout(function(){ if(run===runId) $('itemBrush').classList.add('show'); }, 650); });
+  if(run!==runId) return; $('plus').classList.add('show'); await sleep(350);
+  if(run!==runId) return;
+  await say('v2', function(){ setTimeout(function(){ if(run===runId) $('itemPaste').classList.add('show'); }, 500); });
+  if(run!==runId) return; await sleep(300);
+  await say('v3'); if(run!==runId) return; await sleep(200);
+  await say('v4'); if(run!==runId) return; await sleep(400);
+  setCaption(''); countdown(run);
+}
+
+async function countdown(run){
+  show('count'); var el=$('countNum'), n;
+  for(n=3;n>=1;n--){
+    if(run!==runId) return;
+    el.className=''; el.style.animation='none'; void el.offsetWidth; el.style.animation=''; el.textContent=n;
+    beep(587.33+(3-n)*80, 0.25); await sleep(1000);
+  }
+  if(run!==runId) return;
+  el.className='go'; el.style.animation='none'; void el.offsetWidth; el.style.animation=''; el.textContent='¡Vamos!';
+  beep(1046.5,0.5); await sleep(800);
+  if(run!==runId) return;
+  whenLandscape(function(){ if(run===runId) startVideoStage(); });
+}
+
+/* ---- Video + cronómetro (el cronómetro se calcula con el tiempo real del video) ---- */
+var vid=$('vid'), pausedByRotate=false, pausedByHidden=false, finished=false;
+function fmt(s){ var m=Math.floor(s/60), r=Math.ceil(s%60); if(r===60){ m++; r=0; } return m+':'+(r<10?'0':'')+r; }
+function paintTimer(rem){
+  $('timeText').textContent=fmt(rem);
+  $('tRing').style.strokeDashoffset=(276.5*(1-rem/TOTAL_SECONDS)).toFixed(1);
+  $('barFill').style.width=(100*(1-rem/TOTAL_SECONDS)).toFixed(1)+'%';
+}
+function startVideoStage(){
+  finished=false; paintTimer(TOTAL_SECONDS); show('video');
+  try{ vid.currentTime=0; }catch(e){}
+  var p=vid.play(); if(p&&p.catch) p.catch(function(){ $('tapPlay').classList.add('show'); });
+}
+vid.addEventListener('playing', function(){ $('tapPlay').classList.remove('show'); });
+$('tapPlay').addEventListener('click', function(){ var p=vid.play(); if(p&&p.catch) p.catch(function(){}); });
+vid.addEventListener('timeupdate', function(){
+  if(stage!=='video'||finished) return;
+  var rem=Math.max(0, TOTAL_SECONDS-vid.currentTime); paintTimer(rem);
+  if(rem<=0) finishRoutine();
+});
+vid.addEventListener('ended', function(){ if(stage==='video') finishRoutine(); });
+vid.addEventListener('error', function(){ $('tapPlay').textContent='Lo siento, no se encontró la rutina'; $('tapPlay').classList.add('show'); });
+
+async function finishRoutine(){
+  if(finished) return; finished=true; var run=runId;
+  try{ vid.pause(); }catch(e){}
+  paintTimer(0); show('end'); $('replay').classList.remove('show');
+  fanfare(); confetti();
+  await sleep(1400);
+  if(run!==runId) return;
+  await say('end');
+  if(run!==runId) return;
+  $('replay').classList.add('show');
+}
+function confetti(){
+  var em=['⭐','🎉','🦷','✨','💫','🌟','💙'];
+  for(var i=0;i<46;i++){
+    (function(){
+      var s=document.createElement('div'); s.className='confetti'; s.textContent=em[Math.floor(Math.random()*em.length)];
+      s.style.left=(Math.random()*100)+'vw'; s.style.animationDuration=(2.4+Math.random()*2)+'s'; s.style.animationDelay=(Math.random()*0.8)+'s';
+      document.body.appendChild(s); setTimeout(function(){ s.remove(); }, 5200);
+    })();
+  }
+}
+
+/* ---- Girar el teléfono durante el video: pausa y reanuda ---- */
+onOrient(function(){
+  if(stage!=='video'||finished) return;
+  if(isPortrait()){ if(!vid.paused){ vid.pause(); pausedByRotate=true; } }
+  else if(pausedByRotate){ pausedByRotate=false; var p=vid.play(); if(p&&p.catch) p.catch(function(){ $('tapPlay').classList.add('show'); }); }
+});
+/* ---- Si se cambia de app/pestaña: pausa todo ---- */
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    if(ctx&&ctx.state==='running') ctx.suspend();
+    if(synth&&synth.speaking) synth.pause();
+    if(stage==='video'&&!vid.paused&&!finished){ vid.pause(); pausedByHidden=true; }
+  } else {
+    if(ctx&&ctx.state==='suspended') ctx.resume();
+    if(synth&&synth.paused) synth.resume();
+    if(pausedByHidden){ pausedByHidden=false; if(!isPortrait()){ var p=vid.play(); if(p&&p.catch) p.catch(function(){}); } else pausedByRotate=true; }
+  }
+});
+
+/* ---- Botones ---- */
+function tryFullscreenLandscape(){
+  try{
+    if(!window.matchMedia('(pointer: coarse)').matches) return;
+    var el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    var pr = (rq && !document.fullscreenElement) ? rq.call(el) : null;
+    var lock=function(){ try{ if(screen.orientation && screen.orientation.lock){ screen.orientation.lock('landscape').catch(function(){}); } }catch(e){} };
+    if(pr && pr.then) pr.then(lock).catch(function(){}); else lock();
+  }catch(e){}
+}
+function primeMedia(){
+  // "Desbloquea" video y voz con el primer toque (necesario en iPhone/Android)
+  try{ var p=vid.play(); if(p&&p.then) p.then(function(){ vid.pause(); vid.currentTime=0; }).catch(function(){}); }catch(e){}
+  try{ if(synth){ var u=new SpeechSynthesisUtterance(' '); u.volume=0; synth.speak(u); } }catch(e){}
+}
+function begin(){
+  runId++; var run=runId; finished=false;
+  document.body.classList.add('started');
+  whenLandscape(function(){ if(run===runId) prepSequence(run); });
+}
+$('playBtn').addEventListener('click', function(){
+  initAudio(); startMusic(); tryFullscreenLandscape(); primeMedia(); begin();
+});
+$('replay').addEventListener('click', function(){ initAudio(); startMusic(); begin(); });
+$('muteBtn').addEventListener('click', function(){
+  muted=!muted; $('muteBtn').textContent=muted?'🔇':'🔊';
+  if(ctx){ master.gain.value=muted?0:MUSIC_LEVEL; sfxGain.gain.value=muted?0:0.5; }
+  if(muted && synth) synth.cancel();
+});
+
+})();
+</script>
+</body>
+</html>
